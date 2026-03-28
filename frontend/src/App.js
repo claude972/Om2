@@ -49,6 +49,7 @@ function App() {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [metierFilter, setMetierFilter] = useState('');
   const [dateFilter, setDateFilter] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [loading, setLoading] = useState(true);
   
@@ -68,7 +69,7 @@ function App() {
       loadStatistiques(selectedChantier.id);
       loadTaches();
     }
-  }, [selectedChantier, selectedIntervenant, statusFilter, searchQuery]);
+  }, [selectedChantier, selectedIntervenant, statusFilter, searchQuery, metierFilter]);
 
   // Timer d'inactivité admin
   useEffect(() => {
@@ -137,7 +138,17 @@ function App() {
       };
       
       const response = await axios.get(`${API_URL}/api/taches`, { params });
-      setTaches(response.data);
+      let tachesData = response.data;
+      
+      // Filtrer par métier côté frontend
+      if (metierFilter) {
+        tachesData = tachesData.filter(tache => {
+          const intervenant = intervenants.find(i => i.id === tache.intervenant_id);
+          return intervenant && intervenant.metier.toLowerCase().includes(metierFilter.toLowerCase());
+        });
+      }
+      
+      setTaches(tachesData);
     } catch (error) {
       console.error('Erreur chargement tâches:', error);
     }
@@ -404,6 +415,92 @@ function App() {
                     )}
                   </>
                 )}
+              </div>
+            </div>
+
+            {/* Barre de filtres par métier */}
+            <div className="col-span-1 md:col-span-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
+                Filtrer par corps de métier
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setMetierFilter('')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === '' 
+                      ? 'bg-secondary text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-tous"
+                >
+                  Tous
+                </button>
+                <button
+                  onClick={() => setMetierFilter('Électricien')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === 'Électricien' 
+                      ? 'bg-yellow-500 text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-electricien"
+                >
+                  ⚡ Électricité
+                </button>
+                <button
+                  onClick={() => setMetierFilter('Peintre')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === 'Peintre' 
+                      ? 'bg-purple-500 text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-peintre"
+                >
+                  🎨 Peinture
+                </button>
+                <button
+                  onClick={() => setMetierFilter('Plaquiste')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === 'Plaquiste' 
+                      ? 'bg-blue-500 text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-plaquiste"
+                >
+                  🧱 Placo
+                </button>
+                <button
+                  onClick={() => setMetierFilter('Plombier')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === 'Plombier' 
+                      ? 'bg-cyan-500 text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-plombier"
+                >
+                  🚰 Plomberie
+                </button>
+                <button
+                  onClick={() => setMetierFilter('Carreleur')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === 'Carreleur' 
+                      ? 'bg-orange-500 text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-carreleur"
+                >
+                  ⬜ Carrelage
+                </button>
+                <button
+                  onClick={() => setMetierFilter('Menuisier')}
+                  className={`px-4 py-2 rounded-full font-medium transition-all ${
+                    metierFilter === 'Menuisier' 
+                      ? 'bg-amber-700 text-white shadow-lg' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                  data-testid="filter-menuisier"
+                >
+                  🪵 Menuiserie
+                </button>
               </div>
             </div>
 
