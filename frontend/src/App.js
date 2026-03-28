@@ -1500,9 +1500,6 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
               >
                 {uploadingPhoto ? 'Upload en cours...' : 'Créer la tâche'}
               </button>
-              >
-                Créer la tâche
-              </button>
             </div>
           </form>
         </div>
