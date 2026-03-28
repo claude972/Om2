@@ -1210,16 +1210,60 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
     ordre: 0
   });
 
+  const [photosAvant, setPhotosAvant] = useState([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotosAvant(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          data: event.target.result,
+          legende: ''
+        }]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhoto = (photoId) => {
+    setPhotosAvant(prev => prev.filter(p => p.id !== photoId));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      // Créer la tâche
       const response = await axios.post(`${apiUrl}/api/taches`, formData);
-      alert('Tâche créée avec succès ! N\'oubliez pas d\'ajouter au moins une photo pour une meilleure compréhension.');
+      const tacheId = response.data.id;
+
+      // Uploader les photos si présentes
+      if (photosAvant.length > 0) {
+        setUploadingPhoto(true);
+        for (const photo of photosAvant) {
+          try {
+            await axios.post(`${apiUrl}/api/taches/${tacheId}/photos`, {
+              photo_data: photo.data,
+              photo_type: 'avant',
+              legende: photo.legende || ''
+            });
+          } catch (photoError) {
+            console.error('Erreur upload photo:', photoError);
+          }
+        }
+        setUploadingPhoto(false);
+      }
+
+      alert(`Tâche créée avec succès ! ${photosAvant.length} photo(s) ajoutée(s).`);
       onSuccess();
     } catch (error) {
       console.error('Erreur création tâche:', error);
       alert('Erreur lors de la création de la tâche');
+      setUploadingPhoto(false);
     }
   };
 
@@ -1377,11 +1421,64 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
                 </select>
               </div>
 
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              {/* Section upload photos */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Photos AVANT (recommandé)
+                </label>
+                
+                {/* Miniatures des photos */}
+                {photosAvant.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mb-3">
+                    {photosAvant.map(photo => (
+                      <div key={photo.id} className="relative group">
+                        <img
+                          src={photo.data}
+                          alt="Aperçu"
+                          className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePhoto(photo.id)}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Zone d'upload */}
+                <label className="upload-zone cursor-pointer block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-600 font-medium">
+                      Cliquer pour ajouter des photos
+                    </span>
+                    <span className="text-xs text-gray-500 mt-1">
+                      Plusieurs photos possibles
+                    </span>
+                  </div>
+                </label>
+                
+                <p className="text-xs text-gray-500 mt-2">
+                  💡 Ajoutez des photos pour documenter l'état initial et faciliter la compréhension du travail à réaliser.
+                </p>
+              </div>
+
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800">
-                    <strong>Important :</strong> N'oubliez pas d'ajouter au moins une photo AVANT après la création de la tâche pour une meilleure compréhension du travail à réaliser.
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-800">
+                    <strong>Conseil :</strong> Ajouter des photos dès la création améliore la qualité du suivi et facilite le travail des intervenants.
                   </div>
                 </div>
               </div>
@@ -1397,8 +1494,12 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
               </button>
               <button
                 type="submit"
-                className="flex-1 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-900"
+                disabled={uploadingPhoto}
+                className="flex-1 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="create-task-submit-btn"
+              >
+                {uploadingPhoto ? 'Upload en cours...' : 'Créer la tâche'}
+              </button>
               >
                 Créer la tâche
               </button>
