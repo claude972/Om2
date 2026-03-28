@@ -335,14 +335,14 @@ function App() {
       )}
 
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <header className="bg-black shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             {/* Logo cliquable (secret admin) */}
             <img
               src="/logo.png"
               alt="Logo O2"
-              className="h-16 cursor-pointer select-none"
+              className="h-24 cursor-pointer select-none"
               onClick={handleLogoClick}
               data-testid="logo-btn"
               draggable={false}
@@ -351,10 +351,10 @@ function App() {
             {/* Compteur de progression */}
             {statistiques && (
               <div className="text-right" data-testid="progress-counter">
-                <div className="text-2xl font-bold text-primary">
+                <div className="text-3xl font-bold text-secondary">
                   {statistiques.progression}%
                 </div>
-                <div className="text-xs text-gray-500">Progression</div>
+                <div className="text-sm text-gray-300">Progression</div>
               </div>
             )}
           </div>
@@ -363,7 +363,7 @@ function App() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* Sélecteur de chantier */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-200 mb-1">
                 Chantier
               </label>
               <div className="flex gap-2">
@@ -409,7 +409,7 @@ function App() {
 
             {/* Sélecteur de date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-200 mb-1">
                 Date
               </label>
               <input
