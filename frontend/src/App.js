@@ -364,21 +364,33 @@ function App() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Chantier
               </label>
-              <select
-                value={selectedChantier?.id || ''}
-                onChange={(e) => {
-                  const chantier = chantiers.find(c => c.id === e.target.value);
-                  setSelectedChantier(chantier);
-                }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                data-testid="chantier-selector"
-              >
-                {chantiers.map(chantier => (
-                  <option key={chantier.id} value={chantier.id}>
-                    {chantier.nom} - {chantier.reference}
-                  </option>
-                ))}
-              </select>
+              <div className="flex gap-2">
+                <select
+                  value={selectedChantier?.id || ''}
+                  onChange={(e) => {
+                    const chantier = chantiers.find(c => c.id === e.target.value);
+                    setSelectedChantier(chantier);
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  data-testid="chantier-selector"
+                >
+                  {chantiers.map(chantier => (
+                    <option key={chantier.id} value={chantier.id}>
+                      {chantier.nom} - {chantier.reference}
+                    </option>
+                  ))}
+                </select>
+                {isAdminMode && selectedChantier && (
+                  <button
+                    onClick={() => handleDeleteChantier(selectedChantier.id)}
+                    className="px-3 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center"
+                    data-testid="delete-chantier-btn"
+                    title="Supprimer le chantier"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Sélecteur de date */}
@@ -425,23 +437,42 @@ function App() {
               return (
                 <div
                   key={intervenant.id}
-                  onClick={() => setSelectedIntervenant(intervenant)}
-                  className={`intervenant-card flex-shrink-0 p-4 border-2 rounded-lg cursor-pointer ${
+                  className={`intervenant-card flex-shrink-0 p-4 border-2 rounded-lg relative ${
                     selectedIntervenant?.id === intervenant.id ? 'selected' : 'border-gray-200 bg-white'
                   }`}
                   data-testid={`intervenant-card-${intervenant.id}`}
                 >
-                  <div className="font-semibold text-gray-900">
-                    {intervenant.prenom} {intervenant.nom}
-                  </div>
-                  <div className="text-xs text-secondary font-medium mt-1">
-                    {intervenant.metier}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    {intervenant.taches_completees} / {intervenant.total_taches} tâches
-                  </div>
-                  <div className="progress-bar mt-2">
-                    <div className="progress-fill" style={{ width: `${progression}%` }} />
+                  {/* Bouton de suppression en mode admin */}
+                  {isAdminMode && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteIntervenant(intervenant.id);
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 z-10"
+                      data-testid={`delete-intervenant-${intervenant.id}`}
+                      title="Supprimer l'intervenant"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                  
+                  <div 
+                    onClick={() => setSelectedIntervenant(intervenant)}
+                    className="cursor-pointer"
+                  >
+                    <div className="font-semibold text-gray-900">
+                      {intervenant.prenom} {intervenant.nom}
+                    </div>
+                    <div className="text-xs text-secondary font-medium mt-1">
+                      {intervenant.metier}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">
+                      {intervenant.taches_completees} / {intervenant.total_taches} tâches
+                    </div>
+                    <div className="progress-bar mt-2">
+                      <div className="progress-fill" style={{ width: `${progression}%` }} />
+                    </div>
                   </div>
                 </div>
               );
@@ -508,6 +539,13 @@ function App() {
               const isLate = isTaskLate(tache);
               const urgenceColors = getUrgenceColor(tache.niveau_urgence || 'normale');
               
+              // Récupérer la première photo disponible (avant ou après)
+              const firstPhoto = tache.photos_avant.length > 0 
+                ? tache.photos_avant[0] 
+                : tache.photos_apres.length > 0 
+                  ? tache.photos_apres[0] 
+                  : null;
+              
               return (
                 <div
                   key={tache.id}
@@ -518,53 +556,73 @@ function App() {
                   className={`task-card p-4 rounded-lg border-2 cursor-pointer ${urgenceColors.bg} ${urgenceColors.border}`}
                   data-testid={`task-card-${tache.numero}`}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-lg font-bold text-primary">{tache.numero}</span>
-                      {renderStatusBadge(tache.statut)}
-                      <span className={`text-xs px-2 py-1 rounded-full font-semibold ${urgenceColors.badge}`}>
-                        {urgenceColors.label.toUpperCase()}
-                      </span>
-                      {isLate && (
-                        <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-semibold">
-                          EN RETARD
-                        </span>
+                  <div className="flex gap-4">
+                    {/* Photo miniature à gauche */}
+                    {firstPhoto ? (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={firstPhoto.data}
+                          alt="Aperçu tâche"
+                          className="w-24 h-24 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded-lg border-2 border-gray-200 flex items-center justify-center">
+                        <Camera className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+
+                    {/* Contenu de la carte */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-lg font-bold text-primary">{tache.numero}</span>
+                          {renderStatusBadge(tache.statut)}
+                          <span className={`text-xs px-2 py-1 rounded-full font-semibold ${urgenceColors.badge}`}>
+                            {urgenceColors.label.toUpperCase()}
+                          </span>
+                          {isLate && (
+                            <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-semibold">
+                              EN RETARD
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <h3 className="font-semibold text-gray-900 mb-2 truncate">{tache.intitule}</h3>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          <span className="truncate">{intervenant ? `${intervenant.prenom} ${intervenant.nom}` : 'Non assigné'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4" />
+                          <span className="truncate">{tache.zone}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {format(parseISO(tache.date_prevue), 'dd/MM/yyyy')}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-red-500" />
+                          Limite: {format(parseISO(tache.date_limite), 'dd/MM/yyyy')}
+                        </div>
+                      </div>
+
+                      {tache.photos_avant.length > 0 || tache.photos_apres.length > 0 ? (
+                        <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                          <Camera className="w-3 h-3" />
+                          {tache.photos_avant.length} avant, {tache.photos_apres.length} après
+                        </div>
+                      ) : (
+                        <div className="mt-2 flex items-center gap-2 text-xs text-amber-600 font-medium">
+                          <AlertCircle className="w-3 h-3" />
+                          Aucune photo - À compléter
+                        </div>
                       )}
                     </div>
                   </div>
-
-                  <h3 className="font-semibold text-gray-900 mb-2">{tache.intitule}</h3>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      {intervenant ? `${intervenant.prenom} ${intervenant.nom}` : 'Non assigné'}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      {tache.zone}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {format(parseISO(tache.date_prevue), 'dd/MM/yyyy')}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-red-500" />
-                      Limite: {format(parseISO(tache.date_limite), 'dd/MM/yyyy')}
-                    </div>
-                  </div>
-
-                  {tache.photos_avant.length > 0 || tache.photos_apres.length > 0 ? (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-gray-500">
-                      <Camera className="w-4 h-4" />
-                      {tache.photos_avant.length} avant, {tache.photos_apres.length} après
-                    </div>
-                  ) : (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-amber-600">
-                      <AlertCircle className="w-4 h-4" />
-                      Aucune photo - À compléter
-                    </div>
-                  )}
                 </div>
               );
             })}
