@@ -833,21 +833,9 @@ function App() {
           intervenants={intervenants}
           selectedChantier={selectedChantier}
           onClose={() => setShowNewTaskModal(false)}
-          onSuccess={async () => {
-            setShowNewTaskModal(false);
-            // Retirer tous les filtres
-            setSelectedIntervenant(null);
-            setMetierFilter('');
-            setStatusFilter('');
-            // Recharger les données
-            await loadData();
-            // Attendre un peu puis recharger les tâches
-            setTimeout(() => {
-              if (selectedChantier) {
-                loadTaches();
-                loadStatistiques(selectedChantier.id);
-              }
-            }, 300);
+          onSuccess={() => {
+            // Solution garantie : recharger la page complète
+            window.location.reload();
           }}
           apiUrl={API_URL}
         />
