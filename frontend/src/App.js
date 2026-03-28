@@ -835,7 +835,13 @@ function App() {
           onClose={() => setShowNewTaskModal(false)}
           onSuccess={() => {
             setShowNewTaskModal(false);
-            loadTaches();
+            setSelectedIntervenant(null); // Retirer le filtre intervenant
+            setMetierFilter(''); // Retirer le filtre métier
+            loadData(); // Recharger tout
+            if (selectedChantier) {
+              loadTaches();
+              loadStatistiques(selectedChantier.id);
+            }
           }}
           apiUrl={API_URL}
         />
