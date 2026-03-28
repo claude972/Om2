@@ -833,15 +833,21 @@ function App() {
           intervenants={intervenants}
           selectedChantier={selectedChantier}
           onClose={() => setShowNewTaskModal(false)}
-          onSuccess={() => {
+          onSuccess={async () => {
             setShowNewTaskModal(false);
-            setSelectedIntervenant(null); // Retirer le filtre intervenant
-            setMetierFilter(''); // Retirer le filtre métier
-            loadData(); // Recharger tout
-            if (selectedChantier) {
-              loadTaches();
-              loadStatistiques(selectedChantier.id);
-            }
+            // Retirer tous les filtres
+            setSelectedIntervenant(null);
+            setMetierFilter('');
+            setStatusFilter('');
+            // Recharger les données
+            await loadData();
+            // Attendre un peu puis recharger les tâches
+            setTimeout(() => {
+              if (selectedChantier) {
+                loadTaches();
+                loadStatistiques(selectedChantier.id);
+              }
+            }, 300);
           }}
           apiUrl={API_URL}
         />
