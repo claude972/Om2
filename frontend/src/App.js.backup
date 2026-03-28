@@ -11,17 +11,6 @@ import './App.css';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 
-// Fonction pour obtenir les couleurs selon le niveau d'urgence
-const getUrgenceColor = (niveau) => {
-  const colors = {
-    faible: { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700', label: 'Faible', badge: 'bg-blue-100 text-blue-800' },
-    normale: { bg: 'bg-gray-50', border: 'border-gray-300', text: 'text-gray-700', label: 'Normale', badge: 'bg-gray-100 text-gray-800' },
-    haute: { bg: 'bg-orange-50', border: 'border-orange-400', text: 'text-orange-700', label: 'Haute', badge: 'bg-orange-100 text-orange-800' },
-    critique: { bg: 'bg-red-50', border: 'border-red-500', text: 'text-red-700', label: 'Critique', badge: 'bg-red-100 text-red-800' }
-  };
-  return colors[niveau] || colors.normale;
-};
-
 function App() {
   // États principaux
   const [chantiers, setChantiers] = useState([]);
@@ -234,49 +223,6 @@ function App() {
     setShowPinModal(false);
     setPinValue(['', '', '', '', '', '']);
     setPinError('');
-  };
-
-  // Fonctions de suppression (mode admin uniquement)
-  const handleDeleteTache = async (tacheId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) return;
-    
-    try {
-      await axios.delete(`${API_URL}/api/taches/${tacheId}`);
-      alert('Tâche supprimée avec succès');
-      loadTaches();
-      if (selectedChantier) loadStatistiques(selectedChantier.id);
-      setShowTaskModal(false);
-      setSelectedTache(null);
-    } catch (error) {
-      console.error('Erreur suppression tâche:', error);
-      alert('Erreur lors de la suppression de la tâche');
-    }
-  };
-
-  const handleDeleteIntervenant = async (intervenantId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet intervenant ? Toutes ses tâches assignées devront être réassignées.')) return;
-    
-    try {
-      await axios.delete(`${API_URL}/api/intervenants/${intervenantId}`);
-      alert('Intervenant supprimé avec succès');
-      loadData();
-    } catch (error) {
-      console.error('Erreur suppression intervenant:', error);
-      alert('Erreur lors de la suppression de l\'intervenant');
-    }
-  };
-
-  const handleDeleteChantier = async (chantierId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce chantier ? Toutes les tâches associées seront également supprimées.')) return;
-    
-    try {
-      await axios.delete(`${API_URL}/api/chantiers/${chantierId}`);
-      alert('Chantier supprimé avec succès');
-      loadData();
-    } catch (error) {
-      console.error('Erreur suppression chantier:', error);
-      alert('Erreur lors de la suppression du chantier');
-    }
   };
 
   // Rendu des badges de statut
@@ -506,7 +452,6 @@ function App() {
             {taches.map(tache => {
               const intervenant = intervenants.find(i => i.id === tache.intervenant_id);
               const isLate = isTaskLate(tache);
-              const urgenceColors = getUrgenceColor(tache.niveau_urgence || 'normale');
               
               return (
                 <div
@@ -515,16 +460,13 @@ function App() {
                     setSelectedTache(tache);
                     setShowTaskModal(true);
                   }}
-                  className={`task-card p-4 rounded-lg border-2 cursor-pointer ${urgenceColors.bg} ${urgenceColors.border}`}
+                  className="task-card bg-white p-4 rounded-lg border border-gray-200 cursor-pointer"
                   data-testid={`task-card-${tache.numero}`}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-primary">{tache.numero}</span>
                       {renderStatusBadge(tache.statut)}
-                      <span className={`text-xs px-2 py-1 rounded-full font-semibold ${urgenceColors.badge}`}>
-                        {urgenceColors.label.toUpperCase()}
-                      </span>
                       {isLate && (
                         <span className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-full font-semibold">
                           EN RETARD
@@ -559,12 +501,7 @@ function App() {
                       <Camera className="w-4 h-4" />
                       {tache.photos_avant.length} avant, {tache.photos_apres.length} après
                     </div>
-                  ) : (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-amber-600">
-                      <AlertCircle className="w-4 h-4" />
-                      Aucune photo - À compléter
-                    </div>
-                  )}
+                  ) : null}
                 </div>
               );
             })}
@@ -769,21 +706,6 @@ function TaskDetailModal({ tache, intervenant, isAdminMode, onClose, apiUrl }) {
     }
   };
 
-  const handleDeleteTask = async () => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) return;
-    
-    try {
-      await axios.delete(`${apiUrl}/api/taches/${currentTache.id}`);
-      alert('Tâche supprimée avec succès');
-      onClose();
-    } catch (error) {
-      console.error('Erreur:', error);
-      alert('Erreur lors de la suppression');
-    }
-  };
-
-  const urgenceColors = getUrgenceColor(currentTache.niveau_urgence || 'normale');
-
   return (
     <>
       <div className="fixed inset-0 z-50 overflow-y-auto modal-backdrop" onClick={onClose}>
@@ -796,34 +718,17 @@ function TaskDetailModal({ tache, intervenant, isAdminMode, onClose, apiUrl }) {
             {/* Header */}
             <div className="bg-primary text-white p-4 rounded-t-lg">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-bold">{currentTache.numero}</h2>
-                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${urgenceColors.badge}`}>
-                      {urgenceColors.label.toUpperCase()}
-                    </span>
-                  </div>
+                <div>
+                  <h2 className="text-xl font-bold">{currentTache.numero}</h2>
                   <p className="text-blue-100 text-sm mt-1">{currentTache.intitule}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  {isAdminMode && (
-                    <button
-                      onClick={handleDeleteTask}
-                      className="text-white hover:bg-red-600 p-2 rounded-full bg-red-500"
-                      data-testid="delete-task-btn"
-                      title="Supprimer la tâche"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  )}
-                  <button
-                    onClick={onClose}
-                    className="text-white hover:bg-blue-800 p-2 rounded-full"
-                    data-testid="close-modal-btn"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
+                <button
+                  onClick={onClose}
+                  className="text-white hover:bg-blue-800 p-2 rounded-full"
+                  data-testid="close-modal-btn"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
             </div>
 
@@ -843,14 +748,6 @@ function TaskDetailModal({ tache, intervenant, isAdminMode, onClose, apiUrl }) {
                   <label className="text-sm text-gray-600">Statut</label>
                   <div className="mt-1">
                     {renderStatusBadge(currentTache.statut)}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-600">Niveau d'urgence</label>
-                  <div className="mt-1">
-                    <span className={`text-xs px-3 py-1 rounded-full font-semibold ${urgenceColors.badge}`}>
-                      {urgenceColors.label.toUpperCase()}
-                    </span>
                   </div>
                 </div>
                 <div>
@@ -1097,7 +994,6 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
     date_prevue: format(new Date(), 'yyyy-MM-dd'),
     date_limite: format(new Date(), 'yyyy-MM-dd'),
     statut: 'a_faire',
-    niveau_urgence: 'normale',
     zone: '',
     ordre: 0
   });
@@ -1106,8 +1002,8 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
     e.preventDefault();
 
     try {
-      const response = await axios.post(`${apiUrl}/api/taches`, formData);
-      alert('Tâche créée avec succès ! N\'oubliez pas d\'ajouter au moins une photo pour une meilleure compréhension.');
+      await axios.post(`${apiUrl}/api/taches`, formData);
+      alert('Tâche créée avec succès !');
       onSuccess();
     } catch (error) {
       console.error('Erreur création tâche:', error);
@@ -1250,32 +1146,6 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
                   <option value="a_valider">À valider</option>
                   <option value="validee">Validée</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Niveau d'urgence *
-                </label>
-                <select
-                  value={formData.niveau_urgence}
-                  onChange={(e) => setFormData({ ...formData, niveau_urgence: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  data-testid="niveau-urgence-select"
-                >
-                  <option value="faible">🔵 Faible</option>
-                  <option value="normale">⚪ Normale</option>
-                  <option value="haute">🟠 Haute</option>
-                  <option value="critique">🔴 Critique</option>
-                </select>
-              </div>
-
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800">
-                    <strong>Important :</strong> N'oubliez pas d'ajouter au moins une photo AVANT après la création de la tâche pour une meilleure compréhension du travail à réaliser.
-                  </div>
-                </div>
               </div>
             </div>
 

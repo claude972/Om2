@@ -1,6 +1,7 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
 ║              🏗️  APPLICATION SUIVI CHANTIER O2 - STATUT 🏗️                  ║
+║                         VERSION 1.1.0 - MISE À JOUR                          ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -12,6 +13,30 @@
 ✅ Frontend : React + Tailwind CSS (Port 3000)
 ✅ Base de données : MongoDB avec données de démonstration
 ✅ Services : Gérés par Supervisor (auto-restart)
+✨ Version : 1.1.0 (Nouvelles fonctionnalités ajoutées)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🆕 NOUVEAUTÉS VERSION 1.1.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🗑️  SUPPRESSION EN MODE ADMIN
+     • Supprimer des tâches, intervenants et chantiers
+     • Bouton rouge dans le modal de détail de tâche
+     • Confirmations de sécurité avant chaque suppression
+
+🎯 NIVEAUX D'URGENCE DES TÂCHES
+     • 🔵 Faible (bleu) - Non prioritaire
+     • ⚪ Normale (gris) - Standard
+     • 🟠 Haute (orange) - Important
+     • 🔴 Critique (rouge) - Urgent
+     • Couleurs d'arrière-plan et bordures selon l'urgence
+     • Badge visible sur chaque tâche
+
+📸 IMPORTANCE DES PHOTOS
+     • Alerte si aucune photo ajoutée
+     • Message "Aucune photo - À compléter" sur les tâches
+     • Rappel lors de la création de tâche
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -31,13 +56,9 @@
      • Thomas Roux (Menuisier)
 
 📋 Tâches                 : 13
-     • 7 À faire (gris)
-     • 3 En cours (bleu)
-     • 1 À valider (orange)
-     • 1 Validée (vert)
-     • 1 Refusée (rouge)
-
-📊 Progression Globale    : 7.7%
+     • Avec différents niveaux d'urgence
+     • Réparties sur 2 chantiers
+     • Statuts variés pour la démo
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -68,19 +89,23 @@
 ✅ Mode admin secret (4 clics + PIN)
 ✅ Interface mobile-first responsive
 ✅ Design professionnel (bleu foncé + orange)
+🆕 Suppression d'éléments (admin)
+🆕 Niveaux d'urgence avec couleurs
+🆕 Alertes photos manquantes
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📚 DOCUMENTATION DISPONIBLE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📖 README.md                    Guide complet de l'application
-🚀 DEPLOYMENT.md                Guide de déploiement Emergent
-📝 CHANGELOG.md                 Historique des versions
-👤 GUIDE_UTILISATEUR.md         Guide pour les utilisateurs
-📋 memory/PRD.md                Spécifications détaillées
-🔑 memory/test_credentials.md   Credentials et données de test
-📊 STATUS.txt                   Ce fichier
+📖 README.md                      Guide complet de l'application
+🚀 DEPLOYMENT.md                  Guide de déploiement Emergent
+📝 CHANGELOG.md                   Historique des versions
+👤 GUIDE_UTILISATEUR.md           Guide pour les utilisateurs
+📋 memory/PRD.md                  Spécifications détaillées
+🔑 memory/test_credentials.md     Credentials et données de test
+📊 STATUS.txt                     Ce fichier
+🆕 NOUVELLES_FONCTIONNALITES.md  Détails des nouveautés v1.1.0
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -103,22 +128,27 @@ Test API stats              : curl http://localhost:8001/api/statistiques
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🎯 PROCHAINES ÉTAPES
+🎯 TESTER LES NOUVELLES FONCTIONNALITÉS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. ✅ Tester l'application avec les données de démo
-2. ⚠️  Changer le code PIN (123456 → votre code sécurisé)
-3. ➕ Ajouter vos vrais chantiers et intervenants
-4. 📋 Créer vos premières tâches réelles
-5. 👥 Former votre équipe à l'utilisation
-6. 🚀 Déployer en production sur Emergent
+1. ✅ Activer le mode admin (4 clics sur logo + PIN 123456)
+2. 🎯 Créer une tâche et sélectionner "🔴 Critique" comme urgence
+3. 👀 Observer la carte de tâche avec fond rouge et bordure rouge
+4. 🗑️  Ouvrir une tâche et cliquer sur le bouton rouge de suppression
+5. 📸 Créer une tâche sans photo et observer l'alerte jaune
+6. 🔍 Vérifier que les tâches critiques sont bien visibles en rouge
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💡 CONSEILS
+💡 CONSEILS D'UTILISATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📸 Prenez systématiquement des photos avant/après
+🔴 Utilisez "Critique" pour les urgences (fuites, pannes électriques)
+🟠 Utilisez "Haute" pour les tâches importantes à faire rapidement
+⚪ Utilisez "Normale" pour les tâches standard
+🔵 Utilisez "Faible" pour les finitions et tâches non prioritaires
+
+📸 Ajoutez TOUJOURS au moins une photo AVANT pour chaque tâche
 💬 Commentez vos tâches pour garder une trace
 🔍 Utilisez les filtres pour identifier les urgences
 📊 Consultez la progression pour anticiper les retards
@@ -128,14 +158,19 @@ Test API stats              : curl http://localhost:8001/api/statistiques
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║                   ✅ VOTRE APPLICATION EST PRÊTE ! 🎉                        ║
+║                   ✅ VERSION 1.1.0 OPÉRATIONNELLE ! 🎉                       ║
 ║                                                                              ║
 ║              Développée avec ❤️  pour O2 - L'Intelligence Opérationnelle     ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-Version : 1.0.0 - MVP Complet
+Version : 1.1.0 - Nouvelles Fonctionnalités
 Date    : 28 Mars 2024
 Stack   : React + FastAPI + MongoDB + Tailwind CSS
 Statut  : ✅ PRODUCTION READY
+
+Nouvelles fonctionnalités :
+  🗑️  Suppression en mode admin (tâches, intervenants, chantiers)
+  🎯 Niveaux d'urgence avec couleurs (Faible, Normale, Haute, Critique)
+  📸 Alertes photos manquantes pour meilleure documentation
 

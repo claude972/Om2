@@ -154,6 +154,7 @@ def seed_taches(chantiers, intervenants):
             "date_prevue": (today + timedelta(days=2)).strftime("%Y-%m-%d"),
             "date_limite": (today + timedelta(days=5)).strftime("%Y-%m-%d"),
             "statut": "a_faire",
+            "niveau_urgence": "critique",
             "zone": "Local technique - Sous-sol",
             "photos_avant": [],
             "photos_apres": [],

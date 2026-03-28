@@ -86,6 +86,7 @@ class Tache(BaseModel):
     date_prevue: str
     date_limite: str
     statut: str  # "a_faire", "en_cours", "a_valider", "validee", "refusee"
+    niveau_urgence: str = "normale"  # "faible", "normale", "haute", "critique"
     zone: str
     photos_avant: List[Photo] = []
     photos_apres: List[Photo] = []
