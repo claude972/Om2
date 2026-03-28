@@ -833,9 +833,16 @@ function App() {
           intervenants={intervenants}
           selectedChantier={selectedChantier}
           onClose={() => setShowNewTaskModal(false)}
-          onSuccess={() => {
-            // Solution garantie : recharger la page complète
-            window.location.reload();
+          onSuccess={(nouvelleTache) => {
+            setShowNewTaskModal(false);
+            // Ajouter la nouvelle tâche directement au state
+            setTaches(prevTaches => [nouvelleTache, ...prevTaches]);
+            // Mettre à jour les statistiques
+            if (selectedChantier) {
+              loadStatistiques(selectedChantier.id);
+            }
+            // Recharger les intervenants pour mettre à jour leurs stats
+            loadData();
           }}
           apiUrl={API_URL}
         />
@@ -1336,7 +1343,8 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
     try {
       // Créer la tâche
       const response = await axios.post(`${apiUrl}/api/taches`, formData);
-      const tacheId = response.data.id;
+      const nouvelleTache = response.data;
+      const tacheId = nouvelleTache.id;
 
       // Uploader les photos si présentes
       if (photosAvant.length > 0) {
@@ -1355,8 +1363,11 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
         setUploadingPhoto(false);
       }
 
+      // Recharger la tâche avec les photos
+      const tacheComplete = await axios.get(`${apiUrl}/api/taches/${tacheId}`);
+      
       alert(`Tâche créée avec succès ! ${photosAvant.length} photo(s) ajoutée(s).`);
-      onSuccess();
+      onSuccess(tacheComplete.data);
     } catch (error) {
       console.error('Erreur création tâche:', error);
       alert('Erreur lors de la création de la tâche');
