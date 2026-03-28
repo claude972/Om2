@@ -44,6 +44,8 @@ function App() {
   // États UI
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
+  const [showNewIntervenantModal, setShowNewIntervenantModal] = useState(false);
+  const [showNewChantierModal, setShowNewChantierModal] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -380,15 +382,27 @@ function App() {
                     </option>
                   ))}
                 </select>
-                {isAdminMode && selectedChantier && (
-                  <button
-                    onClick={() => handleDeleteChantier(selectedChantier.id)}
-                    className="px-3 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center"
-                    data-testid="delete-chantier-btn"
-                    title="Supprimer le chantier"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                {isAdminMode && (
+                  <>
+                    <button
+                      onClick={() => setShowNewChantierModal(true)}
+                      className="px-3 py-3 bg-secondary text-white rounded-lg hover:bg-orange-600 flex items-center justify-center"
+                      data-testid="add-chantier-btn"
+                      title="Ajouter un chantier"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                    {selectedChantier && (
+                      <button
+                        onClick={() => handleDeleteChantier(selectedChantier.id)}
+                        className="px-3 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center justify-center"
+                        data-testid="delete-chantier-btn"
+                        title="Supprimer le chantier"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -413,7 +427,19 @@ function App() {
       {/* Liste des intervenants */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Intervenants</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">Intervenants</h2>
+            {isAdminMode && (
+              <button
+                onClick={() => setShowNewIntervenantModal(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-secondary text-white rounded-lg hover:bg-orange-600 text-sm font-medium"
+                data-testid="add-intervenant-btn"
+              >
+                <Plus className="w-4 h-4" />
+                Ajouter
+              </button>
+            )}
+          </div>
           <div className="flex gap-3 overflow-x-auto pb-2" data-testid="intervenants-list">
             {/* Carte "Tous" */}
             <div
@@ -713,6 +739,30 @@ function App() {
           onSuccess={() => {
             setShowNewTaskModal(false);
             loadTaches();
+          }}
+          apiUrl={API_URL}
+        />
+      )}
+
+      {/* Modal nouvel intervenant */}
+      {showNewIntervenantModal && (
+        <NewIntervenantModal
+          onClose={() => setShowNewIntervenantModal(false)}
+          onSuccess={() => {
+            setShowNewIntervenantModal(false);
+            loadData();
+          }}
+          apiUrl={API_URL}
+        />
+      )}
+
+      {/* Modal nouveau chantier */}
+      {showNewChantierModal && (
+        <NewChantierModal
+          onClose={() => setShowNewChantierModal(false)}
+          onSuccess={() => {
+            setShowNewChantierModal(false);
+            loadData();
           }}
           apiUrl={API_URL}
         />
@@ -1351,6 +1401,292 @@ function NewTaskModal({ chantiers, intervenants, selectedChantier, onClose, onSu
                 data-testid="create-task-submit-btn"
               >
                 Créer la tâche
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Composant Modal Nouvel Intervenant
+function NewIntervenantModal({ onClose, onSuccess, apiUrl }) {
+  const [formData, setFormData] = useState({
+    nom: '',
+    prenom: '',
+    metier: '',
+    telephone: '',
+    email: ''
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios.post(`${apiUrl}/api/intervenants`, formData);
+      alert('Intervenant créé avec succès !');
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur création intervenant:', error);
+      alert('Erreur lors de la création de l\'intervenant');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto modal-backdrop" onClick={onClose}>
+      <div className="min-h-screen px-4 py-8">
+        <div
+          className="bg-white rounded-lg max-w-lg mx-auto fade-in"
+          onClick={(e) => e.stopPropagation()}
+          data-testid="new-intervenant-modal"
+        >
+          <div className="bg-secondary text-white p-4 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Nouvel intervenant</h2>
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-orange-600 p-2 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Prénom *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.prenom}
+                    onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    placeholder="Jean"
+                    data-testid="prenom-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nom *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.nom}
+                    onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    placeholder="Dupont"
+                    data-testid="nom-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Métier *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.metier}
+                  onChange={(e) => setFormData({ ...formData, metier: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                  placeholder="Électricien, Plombier, Peintre..."
+                  data-testid="metier-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Téléphone
+                </label>
+                <input
+                  type="tel"
+                  value={formData.telephone}
+                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                  placeholder="06 12 34 56 78"
+                  data-testid="telephone-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                  placeholder="intervenant@email.fr"
+                  data-testid="email-input"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-orange-600"
+                data-testid="create-intervenant-submit-btn"
+              >
+                Créer l'intervenant
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Composant Modal Nouveau Chantier
+function NewChantierModal({ onClose, onSuccess, apiUrl }) {
+  const [formData, setFormData] = useState({
+    nom: '',
+    adresse: '',
+    reference: '',
+    date_debut: format(new Date(), 'yyyy-MM-dd'),
+    date_fin: ''
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await axios.post(`${apiUrl}/api/chantiers`, formData);
+      alert('Chantier créé avec succès !');
+      onSuccess();
+    } catch (error) {
+      console.error('Erreur création chantier:', error);
+      alert('Erreur lors de la création du chantier');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto modal-backdrop" onClick={onClose}>
+      <div className="min-h-screen px-4 py-8">
+        <div
+          className="bg-white rounded-lg max-w-lg mx-auto fade-in"
+          onClick={(e) => e.stopPropagation()}
+          data-testid="new-chantier-modal"
+        >
+          <div className="bg-secondary text-white p-4 rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">Nouveau chantier</h2>
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-orange-600 p-2 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="p-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom du chantier *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.nom}
+                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                  placeholder="Ex: Rénovation Immeuble Centre-Ville"
+                  data-testid="nom-chantier-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Adresse *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.adresse}
+                  onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                  placeholder="Ex: 45 Rue de la République, 75001 Paris"
+                  data-testid="adresse-input"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Référence *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.reference}
+                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                  placeholder="Ex: CHANT-2024-001"
+                  data-testid="reference-input"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date de début
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date_debut}
+                    onChange={(e) => setFormData({ ...formData, date_debut: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    data-testid="date-debut-input"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date de fin estimée
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.date_fin}
+                    onChange={(e) => setFormData({ ...formData, date_fin: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    data-testid="date-fin-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-orange-600"
+                data-testid="create-chantier-submit-btn"
+              >
+                Créer le chantier
               </button>
             </div>
           </form>
