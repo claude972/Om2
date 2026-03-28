@@ -342,7 +342,7 @@ function App() {
             <img
               src="/logo.png"
               alt="Logo O2"
-              className="h-24 cursor-pointer select-none"
+              className="h-32 cursor-pointer select-none"
               onClick={handleLogoClick}
               data-testid="logo-btn"
               draggable={false}
