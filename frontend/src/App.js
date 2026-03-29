@@ -9,7 +9,13 @@ import {
 } from 'lucide-react';
 import './App.css';
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// Détection automatique de l'URL backend selon l'environnement
+const API_URL = process.env.REACT_APP_BACKEND_URL || 
+  (window.location.hostname.includes('preview.emergentagent.com') 
+    ? 'https://btp-suivi.preview.emergentagent.com'
+    : window.location.hostname.includes('emergent.host') || window.location.hostname.includes('emergentagent.com')
+      ? window.location.origin
+      : 'http://localhost:8001');
 
 // Fonction pour obtenir les couleurs selon le niveau d'urgence
 const getUrgenceColor = (niveau) => {
