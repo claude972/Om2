@@ -41,6 +41,9 @@ function App() {
   const [isBlocked, setIsBlocked] = useState(false);
   const [adminTimeout, setAdminTimeout] = useState(null);
   
+  // Debug visible (temporaire)
+  const [debugMsg, setDebugMsg] = useState('');
+  
   // États UI
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
@@ -219,21 +222,30 @@ function App() {
 
   const verifyPin = async (pin) => {
     try {
+      setDebugMsg(`🔐 Envoi PIN: ${pin} vers ${API_URL}/api/config/verify-pin`);
       console.log('🔐 Vérification PIN...', { pin, url: `${API_URL}/api/config/verify-pin` });
+      
       const response = await axios.post(`${API_URL}/api/config/verify-pin`, { pin });
+      
+      setDebugMsg(`✅ Réponse serveur: ${JSON.stringify(response.data)}`);
       console.log('✅ Réponse backend:', response.data);
       
       if (response.data.valid) {
         console.log('✅ PIN correct - Activation mode admin');
+        setDebugMsg('✅ PIN VALIDE - Mode admin activé!');
+        setTimeout(() => setDebugMsg(''), 3000);
+        
         setIsAdminMode(true);
         setShowPinModal(false);
         setPinValue(['', '', '', '', '', '']);
         setPinError('');
       } else {
+        setDebugMsg(`❌ PIN invalide. Tentatives restantes: ${response.data.tentatives_restantes}`);
         console.log('❌ PIN incorrect:', response.data);
         setPinError(`Code incorrect. ${response.data.tentatives_restantes} tentatives restantes.`);
         setPinValue(['', '', '', '', '', '']);
         pinInputRefs.current[0]?.focus();
+        setTimeout(() => setDebugMsg(''), 5000);
       }
     } catch (error) {
       console.error('❌ Erreur vérification PIN:', error);
@@ -243,6 +255,8 @@ function App() {
         status: error.response?.status,
         stack: error.stack
       });
+      
+      setDebugMsg(`❌ ERREUR: ${error.message} | Status: ${error.response?.status || 'N/A'}`);
       
       if (error.response?.status === 403) {
         setPinError(error.response.data.detail);
@@ -254,6 +268,8 @@ function App() {
         const errorMsg = error.response?.data?.detail || error.message || 'Erreur de connexion au serveur';
         setPinError(`Erreur: ${errorMsg}`);
       }
+      
+      setTimeout(() => setDebugMsg(''), 5000);
     }
   };
 
@@ -343,6 +359,15 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Message de debug visible (temporaire) */}
+      {debugMsg && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-blue-600 text-white px-4 py-3 text-sm font-mono shadow-lg">
+          <div className="max-w-7xl mx-auto break-words">
+            {debugMsg}
+          </div>
+        </div>
+      )}
+      
       {/* Bandeau mode admin */}
       {isAdminMode && (
         <div className="admin-banner" data-testid="admin-banner">
@@ -805,6 +830,11 @@ function App() {
                   data-testid={`pin-input-${index}`}
                 />
               ))}
+            </div>
+            
+            {/* Affichage du PIN tapé (debug temporaire) */}
+            <div className="text-center text-xs text-gray-500 mb-2 font-mono">
+              PIN tapé: {pinValue.join('')} {pinValue.filter(d => d).length === 6 && '✓'}
             </div>
 
             {pinError && (
