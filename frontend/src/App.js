@@ -219,26 +219,40 @@ function App() {
 
   const verifyPin = async (pin) => {
     try {
+      console.log('🔐 Vérification PIN...', { pin, url: `${API_URL}/api/config/verify-pin` });
       const response = await axios.post(`${API_URL}/api/config/verify-pin`, { pin });
+      console.log('✅ Réponse backend:', response.data);
       
       if (response.data.valid) {
+        console.log('✅ PIN correct - Activation mode admin');
         setIsAdminMode(true);
         setShowPinModal(false);
         setPinValue(['', '', '', '', '', '']);
         setPinError('');
       } else {
+        console.log('❌ PIN incorrect:', response.data);
         setPinError(`Code incorrect. ${response.data.tentatives_restantes} tentatives restantes.`);
         setPinValue(['', '', '', '', '', '']);
         pinInputRefs.current[0]?.focus();
       }
     } catch (error) {
+      console.error('❌ Erreur vérification PIN:', error);
+      console.error('Details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        stack: error.stack
+      });
+      
       if (error.response?.status === 403) {
         setPinError(error.response.data.detail);
         setShowPinModal(false);
         setIsBlocked(true);
         setPinValue(['', '', '', '', '', '']);
       } else {
-        setPinError('Erreur de vérification');
+        // Message plus explicite avec détails techniques
+        const errorMsg = error.response?.data?.detail || error.message || 'Erreur de connexion au serveur';
+        setPinError(`Erreur: ${errorMsg}`);
       }
     }
   };
