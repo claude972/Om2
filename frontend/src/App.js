@@ -225,7 +225,14 @@ function App() {
       setDebugMsg(`🔐 Envoi PIN: ${pin} vers ${API_URL}/api/config/verify-pin`);
       console.log('🔐 Vérification PIN...', { pin, url: `${API_URL}/api/config/verify-pin` });
       
-      const response = await axios.post(`${API_URL}/api/config/verify-pin`, { pin });
+      const response = await axios.post(`${API_URL}/api/config/verify-pin`, { pin }, {
+        timeout: 10000, // 10 secondes de timeout
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        }
+      });
       
       setDebugMsg(`✅ Réponse serveur: ${JSON.stringify(response.data)}`);
       console.log('✅ Réponse backend:', response.data);
@@ -255,6 +262,18 @@ function App() {
         status: error.response?.status,
         stack: error.stack
       });
+      
+      // Gestion spéciale pour erreur 520 (proxy/cloudflare)
+      if (error.code === 'ECONNABORTED' || error.response?.status === 520 || error.response?.status === 502 || error.response?.status === 503) {
+        setDebugMsg(`⚠️ Erreur réseau temporaire. Nouvelle tentative...`);
+        console.log('🔄 Retry après erreur réseau...');
+        
+        // Réessayer automatiquement après 1 seconde
+        setTimeout(() => {
+          verifyPin(pin);
+        }, 1000);
+        return;
+      }
       
       setDebugMsg(`❌ ERREUR: ${error.message} | Status: ${error.response?.status || 'N/A'}`);
       
