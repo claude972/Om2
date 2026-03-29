@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timedelta
 from typing import List, Optional
 from pydantic import BaseModel
@@ -24,17 +25,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Connexion MongoDB
+# Connexion MongoDB (sync pour la plupart des endpoints)
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017/')
 client = MongoClient(mongo_url)
 db = client[os.environ.get('DATABASE_NAME', 'chantier_db')]
 
-# Collections
+# Connexion MongoDB async (pour endpoints critiques)
+async_client = AsyncIOMotorClient(mongo_url)
+async_db = async_client[os.environ.get('DATABASE_NAME', 'chantier_db')]
+
+# Collections (sync)
 chantiers_collection = db['chantiers']
 intervenants_collection = db['intervenants']
 taches_collection = db['taches']
 commentaires_collection = db['commentaires']
 config_collection = db['config']
+
+# Collections async (pour config uniquement)
+config_collection_async = async_db['config']
 
 # Models Pydantic
 class Chantier(BaseModel):
@@ -160,8 +168,11 @@ def check_block():
     return {"bloque": False}
 
 @app.post("/api/config/verify-pin")
-def verify_pin(data: PinVerification):
-    config = config_collection.find_one({"_id": "config"})
+async def verify_pin(data: PinVerification):
+    config = await config_collection_async.find_one({"_id": "config"})
+    
+    if not config:
+        raise HTTPException(status_code=500, detail="Configuration manquante")
     
     # Vérifier si bloqué
     if config.get('bloque_jusqua'):
@@ -169,15 +180,15 @@ def verify_pin(data: PinVerification):
         if datetime.now() < bloque_jusqua:
             raise HTTPException(status_code=403, detail="Accès bloqué. Réessayez plus tard.")
         else:
-            config_collection.update_one(
+            await config_collection_async.update_one(
                 {"_id": "config"},
                 {"$set": {"tentatives_echecs": 0, "bloque_jusqua": None}}
             )
-            config = config_collection.find_one({"_id": "config"})
+            config = await config_collection_async.find_one({"_id": "config"})
     
     if data.pin == config['admin_pin']:
         # Réinitialiser les tentatives
-        config_collection.update_one(
+        await config_collection_async.update_one(
             {"_id": "config"},
             {"$set": {"tentatives_echecs": 0}}
         )
@@ -191,10 +202,10 @@ def verify_pin(data: PinVerification):
             # Bloquer pour 5 minutes
             bloque_jusqua = datetime.now() + timedelta(minutes=5)
             update_data['bloque_jusqua'] = bloque_jusqua.isoformat()
-            config_collection.update_one({"_id": "config"}, {"$set": update_data})
+            await config_collection_async.update_one({"_id": "config"}, {"$set": update_data})
             raise HTTPException(status_code=403, detail="Trop de tentatives. Accès bloqué pour 5 minutes.")
         
-        config_collection.update_one({"_id": "config"}, {"$set": update_data})
+        await config_collection_async.update_one({"_id": "config"}, {"$set": update_data})
         return {"valid": False, "tentatives_restantes": 3 - tentatives}
 
 @app.put("/api/config/update-pin")
