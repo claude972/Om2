@@ -43,6 +43,7 @@ function App() {
   
   // Debug visible (temporaire)
   const [debugMsg, setDebugMsg] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   
   // États UI
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -222,8 +223,8 @@ function App() {
 
   const verifyPin = async (pin) => {
     try {
-      setDebugMsg(`🔐 Envoi PIN: ${pin} vers ${API_URL}/api/config/verify-pin`);
-      console.log('🔐 Vérification PIN...', { pin, url: `${API_URL}/api/config/verify-pin` });
+      setDebugMsg(`🔐 Envoi PIN: ${pin} (tentative ${retryCount + 1})`);
+      console.log('🔐 Vérification PIN...', { pin, url: `${API_URL}/api/config/verify-pin`, retry: retryCount });
       
       const response = await axios.post(`${API_URL}/api/config/verify-pin`, { pin }, {
         timeout: 10000, // 10 secondes de timeout
@@ -233,6 +234,9 @@ function App() {
           'Pragma': 'no-cache'
         }
       });
+      
+      // Reset retry counter on success
+      setRetryCount(0);
       
       setDebugMsg(`✅ Réponse serveur: ${JSON.stringify(response.data)}`);
       console.log('✅ Réponse backend:', response.data);
@@ -260,32 +264,42 @@ function App() {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        stack: error.stack
+        retryCount: retryCount
       });
       
-      // Gestion spéciale pour erreur 520 (proxy/cloudflare)
-      if (error.code === 'ECONNABORTED' || error.response?.status === 520 || error.response?.status === 502 || error.response?.status === 503) {
-        setDebugMsg(`⚠️ Erreur réseau temporaire. Nouvelle tentative...`);
-        console.log('🔄 Retry après erreur réseau...');
+      // Gestion spéciale pour erreur 520 (proxy/cloudflare) - MAX 2 RETRIES
+      if ((error.code === 'ECONNABORTED' || error.response?.status === 520 || error.response?.status === 502 || error.response?.status === 503) && retryCount < 2) {
+        setDebugMsg(`⚠️ Erreur réseau (${error.response?.status || error.code}). Retry ${retryCount + 1}/2...`);
+        console.log(`🔄 Retry ${retryCount + 1}/2 après erreur réseau...`);
         
-        // Réessayer automatiquement après 1 seconde
+        setRetryCount(retryCount + 1);
+        
+        // Réessayer automatiquement après 1.5 secondes
         setTimeout(() => {
           verifyPin(pin);
-        }, 1000);
+        }, 1500);
         return;
       }
       
-      setDebugMsg(`❌ ERREUR: ${error.message} | Status: ${error.response?.status || 'N/A'}`);
+      // Max retries atteint ou autre erreur
+      setRetryCount(0);
       
-      if (error.response?.status === 403) {
-        setPinError(error.response.data.detail);
-        setShowPinModal(false);
-        setIsBlocked(true);
-        setPinValue(['', '', '', '', '', '']);
+      if (retryCount >= 2) {
+        setDebugMsg(`❌ ÉCHEC après ${retryCount + 1} tentatives. Erreur serveur persistante.`);
+        setPinError(`Erreur serveur persistante. Veuillez réessayer dans quelques instants.`);
       } else {
-        // Message plus explicite avec détails techniques
-        const errorMsg = error.response?.data?.detail || error.message || 'Erreur de connexion au serveur';
-        setPinError(`Erreur: ${errorMsg}`);
+        setDebugMsg(`❌ ERREUR: ${error.message} | Status: ${error.response?.status || 'N/A'}`);
+        
+        if (error.response?.status === 403) {
+          setPinError(error.response.data.detail);
+          setShowPinModal(false);
+          setIsBlocked(true);
+          setPinValue(['', '', '', '', '', '']);
+        } else {
+          // Message plus explicite avec détails techniques
+          const errorMsg = error.response?.data?.detail || error.message || 'Erreur de connexion au serveur';
+          setPinError(`Erreur: ${errorMsg}`);
+        }
       }
       
       setTimeout(() => setDebugMsg(''), 5000);
